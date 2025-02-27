@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>豆瓣高分书籍</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background-color: #f5f5f5;
+            padding-top: 20px;
+        }
+        .header {
+            background-color: #228b22;
+            color: white;
+            padding: 20px 0;
+            margin-bottom: 30px;
+            border-radius: 5px;
+        }
+        .book-card {
+            height: 100%;
+            transition: transform 0.3s;
+            border: none;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .book-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+        }
+        .card-img-top {
+            height: 200px;
+            object-fit: cover;
+            border-top-left-radius: 5px;
+            border-top-right-radius: 5px;
+        }
+        .card-body {
+            padding: 15px;
+        }
+        .card-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            height: 48px;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+        .card-text {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        .rating {
+            color: #e09015;
+            font-weight: bold;
+        }
+        .tag-badge {
+            margin-right: 5px;
+            margin-bottom: 5px;
+            cursor: pointer;
+            background-color: #e0e0e0;
+            color: #333;
+        }
+        .tag-badge.active {
+            background-color: #228b22;
+            color: white;
+        }
+        .tag-container {
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 10px;
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .filter-section {
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .book-tags {
+            margin-top: 10px;
+        }
+        .book-tag {
+            display: inline-block;
+            font-size: 12px;
+            background-color: #f0f0f0;
+            color: #666;
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin-right: 5px;
+            margin-bottom: 5px;
+        }
+        .loading {
+            text-align: center;
+            padding: 50px;
+            font-size: 20px;
+            color: #666;
+        }
+        .no-results {
+            text-align: center;
+            padding: 50px;
+            font-size: 20px;
+            color: #666;
+        }
+        .intro-text {
+            height: 60px;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+        }
+        .search-box {
+            margin-bottom: 20px;
+        }
+        .sort-options {
+            margin-bottom: 20px;
+        }
+        .rating-stars {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .stars {
+            display: inline-block;
+            font-size: 18px;
+            line-height: 1;
+        }
+        .full-star {
+            color: gold;
+            text-shadow: 0 0 1px #a17c00;
+        }
+        .half-star {
+            position: relative;
+            display: inline-block;
+        }
+        .half-star:before {
+            content: "★";
+            color: gold;
+            text-shadow: 0 0 1px #a17c00;
+            position: absolute;
+            left: 0;
+            width: 50%;
+            overflow: hidden;
+        }
+        .half-star:after {
+            content: "☆";
+            color: #ccc;
+        }
+        .empty-star {
+            color: #ccc;
+        }
+        .rating-text {
+            font-weight: bold;
+            color: #e09015;
+            margin-left: 5px;
+        }
+        .tag-category {
+            margin-bottom: 10px;
+        }
+        .category-header {
+            background-color: #f8f9fa;
+            padding: 8px 15px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .category-header:hover {
+            background-color: #e9ecef;
+        }
+        .category-tags {
+            padding: 0 10px;
+            margin-bottom: 15px;
+        }
+        .accordion-button:not(.collapsed) {
+            background-color: #e7f5e7;
+            color: #228b22;
+        }
+        .tag-count {
+            font-size: 0.8em;
+            color: #666;
+            margin-left: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header text-center">
+            <h1>豆瓣高分书籍</h1>
+            <p>评分8.0以上，评价人数1000+的优质书籍</p>
+        </div>
+        
+        <div class="filter-section">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="search-box">
+                        <label for="searchInput" class="form-label">搜索书籍:</label>
+                        <input type="text" class="form-control" id="searchInput" placeholder="输入书名、作者或关键词">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="sort-options">
+                        <label for="sortSelect" class="form-label">排序方式:</label>
+                        <select class="form-select" id="sortSelect">
+                            <option value="rating-desc">评分 (高到低)</option>
+                            <option value="rating-asc">评分 (低到高)</option>
+                            <option value="votes-desc">评价人数 (多到少)</option>
+                            <option value="votes-asc">评价人数 (少到多)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">按标签筛选:</label>
+                <div class="d-flex mb-2">
+                    <button class="btn btn-sm btn-outline-secondary me-2" id="selectAllTags">全选</button>
+                    <button class="btn btn-sm btn-outline-secondary me-2" id="deselectAllTags">取消全选</button>
+                    <button class="btn btn-sm btn-outline-secondary" id="resetFilters">重置所有筛选</button>
+                </div>
+                <div class="tag-container" id="tagContainer">
+                    <div class="accordion" id="tagAccordion">
+                        <!-- 标签分类将在JavaScript中动态生成 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="statsInfo" class="alert alert-info mb-4">
+            加载数据中...
+        </div>
+        
+        <div id="booksContainer">
+            <div class="loading">
+                <div class="spinner-border text-secondary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p>加载书籍数据中...</p>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html> 
