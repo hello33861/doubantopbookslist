@@ -200,6 +200,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         ${selectedInCategory > 0 ? `<span class="ms-2 badge bg-success">${selectedInCategory} 已选</span>` : ''}
                     </button>
                 </h2>
+                <br/>
                 <div id="${collapseId}" 
                      class="accordion-collapse collapse ${shouldExpand ? 'show' : ''}" 
                      aria-labelledby="heading-${categoryId}" 
@@ -269,6 +270,7 @@ document.addEventListener('DOMContentLoaded', () => {
                      aria-labelledby="heading-${othersId}" 
                      data-bs-parent="#tagAccordion">
                     <div class="accordion-body category-tags">
+                        <br/>
                         <!-- 未分类标签将在这里动态添加 -->
                     </div>
                 </div>

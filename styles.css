@@ -100,10 +100,10 @@ main {
 .tag-cloud {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 12px;
     max-height: 200px;
     overflow-y: auto;
-    padding-right: 5px;
+    padding: 15px;
 }
 
 .tag {
@@ -506,4 +506,32 @@ footer {
     .books-grid {
         grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
     }
+}
+
+/* 增加分类之间的间距 */
+.accordion-item {
+    margin-bottom: 15px;
+}
+
+/* 增加标签之间的间距 */
+.tag-badge {
+    margin-right: 8px;
+    margin-bottom: 8px;
+    padding: 6px 12px;
+}
+
+/* 增加分类内部的内边距 */
+.accordion-body {
+    padding: 15px 20px;
+}
+
+/* 增加分类标题的内边距 */
+.accordion-button {
+    padding: 12px 20px;
+}
+
+/* 增加标签类别之间的间距 */
+.category-tags {
+    margin-bottom: 20px;
+    line-height: 2.2;
 } 
