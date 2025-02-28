@@ -61,6 +61,16 @@ const tagCategories = {
     ]
 };
 
+// 添加防抖函数来优化搜索性能
+function debounce(func, wait) {
+    let timeout;
+    return function(...args) {
+        const context = this;
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(context, args), wait);
+    };
+}
+
 // 页面加载完成后执行
 document.addEventListener('DOMContentLoaded', () => {
     // 获取DOM元素
@@ -98,11 +108,11 @@ document.addEventListener('DOMContentLoaded', () => {
             // 初始化书籍列表
             updateBooksList();
             
-            // 添加事件监听器
-            searchInput.addEventListener('input', function() {
+            // 使用防抖优化搜索输入
+            searchInput.addEventListener('input', debounce(function() {
                 searchTerm = this.value.trim().toLowerCase();
                 updateBooksList();
-            });
+            }, 300)); // 300毫秒的延迟
             
             sortSelect.addEventListener('change', function() {
                 currentSort = this.value;
@@ -318,38 +328,96 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
         
-        // 按搜索词筛选
+        // 按搜索词筛选并计算匹配度
         if (searchTerm) {
-            filteredBooks = filteredBooks.filter(book => {
-                return (
-                    (book.title && book.title.toLowerCase().includes(searchTerm)) ||
-                    (book.author && book.author.toLowerCase().includes(searchTerm)) ||
-                    (book.publisher && book.publisher.toLowerCase().includes(searchTerm)) ||
-                    (book.intro && book.intro.toLowerCase().includes(searchTerm))
-                );
-            });
-        }
-        
-        // 排序
-        filteredBooks.sort((a, b) => {
-            const ratingA = parseFloat(a.rating) || 0;
-            const ratingB = parseFloat(b.rating) || 0;
-            const votesA = parseInt(a.votes) || 0;
-            const votesB = parseInt(b.votes) || 0;
+            // 将搜索词按空格或分号分割成关键词数组
+            const keywords = searchTerm.split(/[\s;]+/).filter(keyword => keyword.length > 0);
             
-            switch (currentSort) {
-                case 'rating-desc':
-                    return ratingB - ratingA;
-                case 'rating-asc':
-                    return ratingA - ratingB;
-                case 'votes-desc':
-                    return votesB - votesA;
-                case 'votes-asc':
-                    return votesA - votesB;
-                default:
-                    return ratingB - ratingA;
+            // 如果没有有效关键词，跳过搜索匹配计算
+            if (keywords.length === 0) {
+                // 直接按评分或评价人数排序
+                sortBooksByCurrentCriteria(filteredBooks);
+            } else {
+                // 创建一个包含匹配度的书籍数组
+                const booksWithRelevance = [];
+                
+                filteredBooks.forEach(book => {
+                    // 计算匹配度
+                    let relevance = 0;
+                    let titleMatches = 0;
+                    let authorMatches = 0;
+                    let tagMatches = 0;
+                    let introMatches = 0;
+                    
+                    keywords.forEach(keyword => {
+                        // 标题匹配权重最高
+                        if (book.title && book.title.toLowerCase().includes(keyword)) {
+                            relevance += 10;
+                            titleMatches++;
+                            // 如果关键词在标题开头，额外加分
+                            if (book.title.toLowerCase().startsWith(keyword)) {
+                                relevance += 5;
+                            }
+                        }
+                        
+                        // 作者匹配权重次之
+                        if (book.author && book.author.toLowerCase().includes(keyword)) {
+                            relevance += 8;
+                            authorMatches++;
+                        }
+                        
+                        // 标签匹配
+                        if (book.tags && book.tags.some(tag => tag.toLowerCase().includes(keyword))) {
+                            relevance += 6;
+                            tagMatches++;
+                            // 如果有完全匹配的标签，额外加分
+                            if (book.tags.some(tag => tag.toLowerCase() === keyword)) {
+                                relevance += 3;
+                            }
+                        }
+                        
+                        // 简介匹配权重较低
+                        if (book.intro && book.intro.toLowerCase().includes(keyword)) {
+                            relevance += 4;
+                            introMatches++;
+                        }
+                        
+                        // 出版社匹配
+                        if (book.publisher && book.publisher.toLowerCase().includes(keyword)) {
+                            relevance += 3;
+                        }
+                    });
+                    
+                    // 如果至少有一个匹配，添加到结果中
+                    if (relevance > 0) {
+                        // 匹配的关键词数量也影响相关性
+                        const keywordMatchCount = titleMatches + authorMatches + tagMatches + introMatches;
+                        // 匹配的字段数量也影响相关性
+                        const fieldMatchCount = (titleMatches > 0 ? 1 : 0) + 
+                                               (authorMatches > 0 ? 1 : 0) + 
+                                               (tagMatches > 0 ? 1 : 0) + 
+                                               (introMatches > 0 ? 1 : 0);
+                        
+                        // 最终相关性分数
+                        const finalRelevance = relevance + (keywordMatchCount * 2) + (fieldMatchCount * 3);
+                        
+                        booksWithRelevance.push({ 
+                            book, 
+                            relevance: finalRelevance 
+                        });
+                    }
+                });
+                
+                // 按相关性排序
+                booksWithRelevance.sort((a, b) => b.relevance - a.relevance);
+                
+                // 提取排序后的书籍
+                filteredBooks = booksWithRelevance.map(item => item.book);
             }
-        });
+        } else {
+            // 如果没有搜索词，直接按评分或评价人数排序
+            sortBooksByCurrentCriteria(filteredBooks);
+        }
         
         // 更新统计信息
         statsInfo.innerHTML = `
@@ -442,6 +510,29 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // 初始化懒加载
         initLazyLoading();
+    }
+    
+    // 提取排序逻辑到单独的函数
+    function sortBooksByCurrentCriteria(books) {
+        books.sort((a, b) => {
+            const ratingA = parseFloat(a.rating) || 0;
+            const ratingB = parseFloat(b.rating) || 0;
+            const votesA = parseInt(a.votes) || 0;
+            const votesB = parseInt(b.votes) || 0;
+            
+            switch (currentSort) {
+                case 'rating-desc':
+                    return ratingB - ratingA;
+                case 'rating-asc':
+                    return ratingA - ratingB;
+                case 'votes-desc':
+                    return votesB - votesA;
+                case 'votes-asc':
+                    return votesA - votesB;
+                default:
+                    return ratingB - ratingA;
+            }
+        });
     }
     
     // 添加懒加载初始化函数
