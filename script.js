@@ -3,7 +3,7 @@ let allBooks = [];
 let allTags = [];
 let filteredBooks = [];
 let currentTag = 'all';
-let currentSort = 'rating-desc';
+let currentSort = 'votes-desc';
 let searchQuery = '';
 
 // 在script.js文件中添加标签分类定义
@@ -88,7 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let allTags = [];
     let selectedTags = new Set();
     let searchTerm = '';
-    let currentSort = 'rating-desc';
+    let currentSort = 'votes-desc';
     
     // 加载数据
     fetch('books.json')
@@ -135,8 +135,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 selectedTags.clear();
                 searchInput.value = '';
                 searchTerm = '';
-                sortSelect.value = 'rating-desc';
-                currentSort = 'rating-desc';
+                sortSelect.value = 'votes-desc';
+                currentSort = 'votes-desc';
                 renderTags();
                 updateBooksList();
             });
