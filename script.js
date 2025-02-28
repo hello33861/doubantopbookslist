@@ -381,8 +381,12 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // 默认图片和实际图片URL
             const defaultImgUrl = 'https://img9.doubanio.com/f/shire/5522dd1f5b742d1e1394a17f44d590646b63871d/pics/book-default-medium.gif';
-            const imgUrl = book.img_url || defaultImgUrl;
-            
+            let imgUrl = book.img_url || defaultImgUrl;
+            console.log(imgUrl);
+            // 使用代理服务替换豆瓣图片URL
+            if (imgUrl.includes('doubanio.com') || imgUrl.includes('douban.com')) {
+                imgUrl = `https://images.weserv.nl/?url=${encodeURIComponent(imgUrl)}`;
+            }
             // 将评分转换为星星显示
             const rating = parseFloat(book.rating) || 0;
             const fullStars = Math.floor(rating / 2);
