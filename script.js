@@ -450,7 +450,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // 默认图片和实际图片URL
             const defaultImgUrl = 'https://img9.doubanio.com/f/shire/5522dd1f5b742d1e1394a17f44d590646b63871d/pics/book-default-medium.gif';
             let imgUrl = book.img_url || defaultImgUrl;
-            console.log(imgUrl);
+            // console.log(imgUrl);
             // 使用代理服务替换豆瓣图片URL
             if (imgUrl.includes('doubanio.com') || imgUrl.includes('douban.com')) {
                 imgUrl = `https://images.weserv.nl/?url=${encodeURIComponent(imgUrl)}`;
@@ -486,7 +486,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="card-body">
                         <h5 class="card-title">${book.title || '未知标题'}</h5>
                         <p class="card-text">${book.author || '未知作者'}</p>
-                        <p class="card-text">出版社: ${book.publisher || '未知'}</p>
+                        <p class="card-text">出版日期: ${book.publisher || '未知'}</p>
+                        <p class="card-text">价格: ${book.pub_date || '未知'}</p>
                         <p class="card-text rating-stars">
                             <span class="stars">${starsHtml}</span>
                             <span class="rating-text">${rating.toFixed(1)}</span>
