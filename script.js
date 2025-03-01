@@ -567,7 +567,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // 简单的版本检查
-    const currentVersion = '1.0.1'; // 当前版本
+    const currentVersion = '1.0.2'; // 当前版本
     const storedVersion = localStorage.getItem('appVersion');
 
     console.log(currentVersion, storedVersion);
