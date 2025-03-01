@@ -91,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentSort = 'votes-desc';
     
     // 加载数据
-    fetch('books.json')
+    fetch('books.json?v=1')  // 添加版本号到数据文件
         .then(response => {
             if (!response.ok) {
                 throw new Error('网络响应不正常');
@@ -562,6 +562,40 @@ document.addEventListener('DOMContentLoaded', () => {
             lazyImages.forEach(lazyImage => {
                 lazyImage.src = lazyImage.dataset.src;
                 lazyImage.classList.remove('lazy-image');
+            });
+        }
+    }
+
+    // 简单的版本检查
+    const currentVersion = '1.0.1'; // 当前版本
+    const storedVersion = localStorage.getItem('appVersion');
+
+    console.log(currentVersion, storedVersion);
+
+    if (storedVersion !== currentVersion) {
+        // 版本不匹配，更新存储的版本
+        localStorage.setItem('appVersion', currentVersion);
+        
+        // 如果是从旧版本更新，显示更新提示
+        if (storedVersion) {
+            const updateNotification = document.createElement('div');
+            updateNotification.style.position = 'fixed';
+            updateNotification.style.bottom = '20px';
+            updateNotification.style.right = '20px';
+            updateNotification.style.padding = '15px';
+            updateNotification.style.backgroundColor = '#4CAF50';
+            updateNotification.style.color = 'white';
+            updateNotification.style.borderRadius = '5px';
+            updateNotification.style.boxShadow = '0 2px 10px rgba(0,0,0,0.2)';
+            updateNotification.style.zIndex = '1000';
+            updateNotification.innerHTML = `
+                <p style="margin: 0 0 10px 0">网站已更新到新版本!</p>
+                <button id="dismiss-btn" style="background: white; color: #4CAF50; border: none; padding: 5px 10px; cursor: pointer; border-radius: 3px;">知道了</button>
+            `;
+            document.body.appendChild(updateNotification);
+            
+            document.getElementById('dismiss-btn').addEventListener('click', () => {
+                updateNotification.remove();
             });
         }
     }
