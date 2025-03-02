@@ -91,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentSort = 'votes-desc';
     
     // 加载数据
-    fetch('books.json?v=1')  // 添加版本号到数据文件
+    fetch('books.json?v=1.0.2')  // 添加版本号到数据文件
         .then(response => {
             if (!response.ok) {
                 throw new Error('网络响应不正常');
