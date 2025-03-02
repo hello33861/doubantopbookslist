@@ -90,8 +90,37 @@ document.addEventListener('DOMContentLoaded', () => {
     let searchTerm = '';
     let currentSort = 'votes-desc';
     
+    // 从localStorage加载保存的状态
+    function loadSavedState() {
+        // 加载选中的标签
+        const savedTags = localStorage.getItem('selectedTags');
+        if (savedTags) {
+            selectedTags = new Set(JSON.parse(savedTags));
+        }
+        
+        // 加载搜索框内容
+        const savedSearch = localStorage.getItem('searchText');
+        if (savedSearch) {
+            searchInput.value = savedSearch;
+        }
+        
+        // 加载排序方式
+        const savedSort = localStorage.getItem('sortMethod');
+        if (savedSort) {
+            currentSort = savedSort;
+            sortSelect.value = savedSort;
+        }
+    }
+    
+    // 保存当前状态到localStorage
+    function saveCurrentState() {
+        localStorage.setItem('selectedTags', JSON.stringify(Array.from(selectedTags)));
+        localStorage.setItem('searchText', searchInput.value);
+        localStorage.setItem('sortMethod', currentSort);
+    }
+
     // 加载数据
-    fetch('books.json?v=1.0.2')  // 添加版本号到数据文件
+    fetch('books.json?v=1.0.3')  // 添加版本号到数据文件
         .then(response => {
             if (!response.ok) {
                 throw new Error('网络响应不正常');
@@ -102,6 +131,9 @@ document.addEventListener('DOMContentLoaded', () => {
             allBooks = data.books;
             allTags = data.tags;
             
+            // 加载保存的状态
+            loadSavedState();
+            
             // 初始化标签
             renderTags();
             
@@ -111,22 +143,26 @@ document.addEventListener('DOMContentLoaded', () => {
             // 使用防抖优化搜索输入
             searchInput.addEventListener('input', debounce(function() {
                 searchTerm = this.value.trim().toLowerCase();
+                saveCurrentState(); // 保存状态
                 updateBooksList();
             }, 300)); // 300毫秒的延迟
             
             sortSelect.addEventListener('change', function() {
                 currentSort = this.value;
+                saveCurrentState(); // 保存状态
                 updateBooksList();
             });
             
             selectAllTagsBtn.addEventListener('click', function() {
                 selectedTags = new Set(allTags);
+                saveCurrentState(); // 保存状态
                 renderTags();
                 updateBooksList();
             });
             
             deselectAllTagsBtn.addEventListener('click', function() {
                 selectedTags.clear();
+                saveCurrentState(); // 保存状态
                 renderTags();
                 updateBooksList();
             });
@@ -137,6 +173,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 searchTerm = '';
                 sortSelect.value = 'votes-desc';
                 currentSort = 'votes-desc';
+                saveCurrentState(); // 保存状态
                 renderTags();
                 updateBooksList();
             });
@@ -236,6 +273,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         selectedTags.add(tag);
                     }
                     this.classList.toggle('active');
+                    saveCurrentState(); // 保存状态
                     updateBooksList();
                     renderTags(); // 重新渲染标签以更新选中状态
                 });
@@ -301,6 +339,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         selectedTags.add(tag);
                     }
                     this.classList.toggle('active');
+                    saveCurrentState(); // 保存状态
                     updateBooksList();
                     renderTags(); // 重新渲染标签以更新选中状态
                 });
@@ -567,7 +606,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // 简单的版本检查
-    const currentVersion = '1.0.2'; // 当前版本
+    const currentVersion = '1.0.3'; // 当前版本
     const storedVersion = localStorage.getItem('appVersion');
 
     console.log(currentVersion, storedVersion);
