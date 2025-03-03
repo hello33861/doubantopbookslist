@@ -71,8 +71,217 @@ function debounce(func, wait) {
     };
 }
 
+// 初始化标签云
+function initTagCloud() {
+    const tagCloud = document.getElementById('tag-cloud');
+    
+    // 按标签下的书籍数量排序
+    const tagCounts = {};
+    allTags.forEach(tag => {
+        tagCounts[tag] = allBooks.filter(book => 
+            book.tags && book.tags.includes(tag)
+        ).length;
+    });
+    
+    const sortedTags = allTags.sort((a, b) => tagCounts[b] - tagCounts[a]);
+    
+    // 只显示前50个最常见的标签
+    const displayTags = sortedTags.slice(0, 50);
+    
+    displayTags.forEach(tag => {
+        const tagElement = document.createElement('div');
+        tagElement.className = 'tag';
+        tagElement.dataset.tag = tag;
+        tagElement.textContent = `${tag} (${tagCounts[tag]})`;
+        
+        tagElement.addEventListener('click', () => {
+            // 移除所有标签的active类
+            document.querySelectorAll('.tag').forEach(el => {
+                el.classList.remove('active');
+            });
+            
+            // 添加active类到当前标签
+            tagElement.classList.add('active');
+            
+            // 更新当前标签并重新渲染
+            currentTag = tag;
+            filterAndRenderBooks();
+        });
+        
+        tagCloud.appendChild(tagElement);
+    });
+}
+
+// 处理搜索
+function handleSearch() {
+    const input = document.getElementById('search-input');
+    searchQuery = input.value.trim().toLowerCase();
+    filterAndRenderBooks();
+}
+
+// 过滤并渲染书籍
+function filterAndRenderBooks() {
+    // 根据标签和搜索词过滤
+    filteredBooks = allBooks.filter(book => {
+        // 标签过滤
+        const passesTagFilter = currentTag === 'all' || 
+            (book.tags && book.tags.includes(currentTag));
+        
+        // 搜索词过滤
+        const passesSearchFilter = !searchQuery || 
+            book.title.toLowerCase().includes(searchQuery) || 
+            (book.author && book.author.toLowerCase().includes(searchQuery));
+        
+        return passesTagFilter && passesSearchFilter;
+    });
+    
+    // 排序并渲染
+    sortBooks();
+    renderBooks();
+    updateStats();
+}
+
+// 排序书籍
+function sortBooks() {
+    switch (currentSort) {
+        case 'rating-desc':
+            filteredBooks.sort((a, b) => parseFloat(b.rating) - parseFloat(a.rating));
+            break;
+        case 'rating-asc':
+            filteredBooks.sort((a, b) => parseFloat(a.rating) - parseFloat(b.rating));
+            break;
+        case 'votes-desc':
+            filteredBooks.sort((a, b) => parseInt(b.votes) - parseInt(a.votes));
+            break;
+        case 'votes-asc':
+            filteredBooks.sort((a, b) => parseInt(a.votes) - parseInt(b.votes));
+            break;
+    }
+}
+
+// 渲染书籍
+function renderBooks() {
+    const booksGrid = document.getElementById('books-grid');
+    booksGrid.innerHTML = '';
+    
+    if (filteredBooks.length === 0) {
+        document.getElementById('no-results').style.display = 'flex';
+        return;
+    }
+    
+    document.getElementById('no-results').style.display = 'none';
+    
+    filteredBooks.forEach(book => {
+        const bookCard = document.createElement('div');
+        bookCard.className = 'book-card';
+        bookCard.addEventListener('click', () => showBookDetail(book));
+        
+        // 默认封面图片
+        let coverUrl = book.img_url || 'https://via.placeholder.com/200x300?text=No+Cover';
+        
+        // 限制显示的标签数量
+        const displayTags = book.tags && book.tags.length > 0 
+            ? book.tags.slice(0, 3) 
+            : [];
+        
+        bookCard.innerHTML = `
+            <div class="book-cover">
+                <img src="${coverUrl}" alt="${book.title}" onerror="this.src='https://via.placeholder.com/200x300?text=No+Cover'">
+                <div class="book-rating">${book.rating}</div>
+            </div>
+            <div class="book-info">
+                <div class="book-title">${book.title}</div>
+                <div class="book-author">${book.author || '未知作者'}</div>
+                <div class="book-meta">
+                    <div class="book-votes">
+                        <i class="fas fa-user"></i> ${book.votes}人评价
+                    </div>
+                </div>
+                ${displayTags.length > 0 ? `
+                <div class="book-tags">
+                    ${displayTags.map(tag => `<span class="book-tag">${tag}</span>`).join('')}
+                </div>` : ''}
+            </div>
+        `;
+        
+        booksGrid.appendChild(bookCard);
+    });
+}
+
+// 显示书籍详情
+function showBookDetail(book) {
+    const modalBody = document.getElementById('modal-body');
+    
+    // 默认封面图片
+    let coverUrl = book.img_url || 'https://via.placeholder.com/200x300?text=No+Cover';
+    
+    modalBody.innerHTML = `
+        <div class="book-detail">
+            <div class="book-detail-cover">
+                <img src="${coverUrl}" alt="${book.title}" onerror="this.src='https://via.placeholder.com/200x300?text=No+Cover'">
+            </div>
+            <div class="book-detail-info">
+                <h2 class="book-detail-title">${book.title}</h2>
+                <div class="book-detail-author">${book.author || '未知作者'}</div>
+                
+                <div class="book-detail-meta">
+                    <div class="book-detail-rating">
+                        <i class="fas fa-star"></i> ${book.rating}
+                    </div>
+                    <div class="book-detail-votes">
+                        <i class="fas fa-user"></i> ${book.votes}人评价
+                    </div>
+                </div>
+                
+                <div class="book-detail-publisher">
+                    ${book.publisher ? `出版社: ${book.publisher}` : ''}
+                    ${book.pub_date ? ` | 出版日期: ${book.pub_date}` : ''}
+                </div>
+                
+                ${book.tags && book.tags.length > 0 ? `
+                <div class="book-detail-tags">
+                    ${book.tags.map(tag => `<span class="book-detail-tag">${tag}</span>`).join('')}
+                </div>` : ''}
+                
+                ${book.intro ? `
+                <div class="book-detail-intro">
+                    <h3>内容简介</h3>
+                    <p>${book.intro}</p>
+                </div>` : ''}
+                
+                <a href="${book.book_url}" target="_blank" class="book-detail-link">
+                    <i class="fas fa-external-link-alt"></i> 在豆瓣查看
+                </a>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('book-modal').style.display = 'block';
+}
+
+// 更新统计信息
+function updateStats() {
+    document.getElementById('total-books').textContent = allBooks.length;
+    document.getElementById('displayed-books').textContent = filteredBooks.length;
+    
+    // 计算平均评分
+    if (filteredBooks.length > 0) {
+        const totalRating = filteredBooks.reduce((sum, book) => sum + parseFloat(book.rating), 0);
+        const averageRating = (totalRating / filteredBooks.length).toFixed(1);
+        document.getElementById('average-rating').textContent = averageRating;
+    } else {
+        document.getElementById('average-rating').textContent = '0';
+    }
+}
+
+// 显示/隐藏加载状态
+function showLoading(show) {
+    document.getElementById('loading').style.display = show ? 'flex' : 'none';
+}
+
+// 初始化应用
 // 页面加载完成后执行
-document.addEventListener('DOMContentLoaded', () => {
+function initApp() {
     // 获取DOM元素
     const booksContainer = document.getElementById('booksContainer');
     const tagContainer = document.getElementById('tagContainer');
@@ -102,6 +311,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const savedSearch = localStorage.getItem('searchText');
         if (savedSearch) {
             searchInput.value = savedSearch;
+            searchTerm = savedSearch.trim().toLowerCase(); // 设置搜索词以便过滤
         }
         
         // 加载排序方式
@@ -119,8 +329,10 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('sortMethod', currentSort);
     }
 
+    console.log(currentVersion, `books.json?v=${currentVersion}`);
+
     // 加载数据
-    fetch('books.json?v=1.0.3')  // 添加版本号到数据文件
+    fetch(`books.json?v=${currentVersion}`)  // 添加版本号到数据文件
         .then(response => {
             if (!response.ok) {
                 throw new Error('网络响应不正常');
@@ -605,8 +817,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // 简单的版本检查
-    const currentVersion = '1.0.3'; // 当前版本
     const storedVersion = localStorage.getItem('appVersion');
 
     console.log(currentVersion, storedVersion);
@@ -638,212 +848,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
     }
-});
-
-// 初始化标签云
-function initTagCloud() {
-    const tagCloud = document.getElementById('tag-cloud');
-    
-    // 按标签下的书籍数量排序
-    const tagCounts = {};
-    allTags.forEach(tag => {
-        tagCounts[tag] = allBooks.filter(book => 
-            book.tags && book.tags.includes(tag)
-        ).length;
-    });
-    
-    const sortedTags = allTags.sort((a, b) => tagCounts[b] - tagCounts[a]);
-    
-    // 只显示前50个最常见的标签
-    const displayTags = sortedTags.slice(0, 50);
-    
-    displayTags.forEach(tag => {
-        const tagElement = document.createElement('div');
-        tagElement.className = 'tag';
-        tagElement.dataset.tag = tag;
-        tagElement.textContent = `${tag} (${tagCounts[tag]})`;
-        
-        tagElement.addEventListener('click', () => {
-            // 移除所有标签的active类
-            document.querySelectorAll('.tag').forEach(el => {
-                el.classList.remove('active');
-            });
-            
-            // 添加active类到当前标签
-            tagElement.classList.add('active');
-            
-            // 更新当前标签并重新渲染
-            currentTag = tag;
-            filterAndRenderBooks();
-        });
-        
-        tagCloud.appendChild(tagElement);
-    });
 }
 
-// 处理搜索
-function handleSearch() {
-    const input = document.getElementById('search-input');
-    searchQuery = input.value.trim().toLowerCase();
-    filterAndRenderBooks();
-}
-
-// 过滤并渲染书籍
-function filterAndRenderBooks() {
-    // 根据标签和搜索词过滤
-    filteredBooks = allBooks.filter(book => {
-        // 标签过滤
-        const passesTagFilter = currentTag === 'all' || 
-            (book.tags && book.tags.includes(currentTag));
-        
-        // 搜索词过滤
-        const passesSearchFilter = !searchQuery || 
-            book.title.toLowerCase().includes(searchQuery) || 
-            (book.author && book.author.toLowerCase().includes(searchQuery));
-        
-        return passesTagFilter && passesSearchFilter;
-    });
-    
-    // 排序并渲染
-    sortBooks();
-    renderBooks();
-    updateStats();
-}
-
-// 排序书籍
-function sortBooks() {
-    switch (currentSort) {
-        case 'rating-desc':
-            filteredBooks.sort((a, b) => parseFloat(b.rating) - parseFloat(a.rating));
-            break;
-        case 'rating-asc':
-            filteredBooks.sort((a, b) => parseFloat(a.rating) - parseFloat(b.rating));
-            break;
-        case 'votes-desc':
-            filteredBooks.sort((a, b) => parseInt(b.votes) - parseInt(a.votes));
-            break;
-        case 'votes-asc':
-            filteredBooks.sort((a, b) => parseInt(a.votes) - parseInt(b.votes));
-            break;
-    }
-}
-
-// 渲染书籍
-function renderBooks() {
-    const booksGrid = document.getElementById('books-grid');
-    booksGrid.innerHTML = '';
-    
-    if (filteredBooks.length === 0) {
-        document.getElementById('no-results').style.display = 'flex';
-        return;
-    }
-    
-    document.getElementById('no-results').style.display = 'none';
-    
-    filteredBooks.forEach(book => {
-        const bookCard = document.createElement('div');
-        bookCard.className = 'book-card';
-        bookCard.addEventListener('click', () => showBookDetail(book));
-        
-        // 默认封面图片
-        let coverUrl = book.img_url || 'https://via.placeholder.com/200x300?text=No+Cover';
-        
-        // 限制显示的标签数量
-        const displayTags = book.tags && book.tags.length > 0 
-            ? book.tags.slice(0, 3) 
-            : [];
-        
-        bookCard.innerHTML = `
-            <div class="book-cover">
-                <img src="${coverUrl}" alt="${book.title}" onerror="this.src='https://via.placeholder.com/200x300?text=No+Cover'">
-                <div class="book-rating">${book.rating}</div>
-            </div>
-            <div class="book-info">
-                <div class="book-title">${book.title}</div>
-                <div class="book-author">${book.author || '未知作者'}</div>
-                <div class="book-meta">
-                    <div class="book-votes">
-                        <i class="fas fa-user"></i> ${book.votes}人评价
-                    </div>
-                </div>
-                ${displayTags.length > 0 ? `
-                <div class="book-tags">
-                    ${displayTags.map(tag => `<span class="book-tag">${tag}</span>`).join('')}
-                </div>` : ''}
-            </div>
-        `;
-        
-        booksGrid.appendChild(bookCard);
-    });
-}
-
-// 显示书籍详情
-function showBookDetail(book) {
-    const modalBody = document.getElementById('modal-body');
-    
-    // 默认封面图片
-    let coverUrl = book.img_url || 'https://via.placeholder.com/200x300?text=No+Cover';
-    
-    modalBody.innerHTML = `
-        <div class="book-detail">
-            <div class="book-detail-cover">
-                <img src="${coverUrl}" alt="${book.title}" onerror="this.src='https://via.placeholder.com/200x300?text=No+Cover'">
-            </div>
-            <div class="book-detail-info">
-                <h2 class="book-detail-title">${book.title}</h2>
-                <div class="book-detail-author">${book.author || '未知作者'}</div>
-                
-                <div class="book-detail-meta">
-                    <div class="book-detail-rating">
-                        <i class="fas fa-star"></i> ${book.rating}
-                    </div>
-                    <div class="book-detail-votes">
-                        <i class="fas fa-user"></i> ${book.votes}人评价
-                    </div>
-                </div>
-                
-                <div class="book-detail-publisher">
-                    ${book.publisher ? `出版社: ${book.publisher}` : ''}
-                    ${book.pub_date ? ` | 出版日期: ${book.pub_date}` : ''}
-                </div>
-                
-                ${book.tags && book.tags.length > 0 ? `
-                <div class="book-detail-tags">
-                    ${book.tags.map(tag => `<span class="book-detail-tag">${tag}</span>`).join('')}
-                </div>` : ''}
-                
-                ${book.intro ? `
-                <div class="book-detail-intro">
-                    <h3>内容简介</h3>
-                    <p>${book.intro}</p>
-                </div>` : ''}
-                
-                <a href="${book.book_url}" target="_blank" class="book-detail-link">
-                    <i class="fas fa-external-link-alt"></i> 在豆瓣查看
-                </a>
-            </div>
-        </div>
-    `;
-    
-    document.getElementById('book-modal').style.display = 'block';
-}
-
-// 更新统计信息
-function updateStats() {
-    document.getElementById('total-books').textContent = allBooks.length;
-    document.getElementById('displayed-books').textContent = filteredBooks.length;
-    
-    // 计算平均评分
-    if (filteredBooks.length > 0) {
-        const totalRating = filteredBooks.reduce((sum, book) => sum + parseFloat(book.rating), 0);
-        const averageRating = (totalRating / filteredBooks.length).toFixed(1);
-        document.getElementById('average-rating').textContent = averageRating;
-    } else {
-        document.getElementById('average-rating').textContent = '0';
-    }
-}
-
-// 显示/隐藏加载状态
-function showLoading(show) {
-    document.getElementById('loading').style.display = show ? 'flex' : 'none';
-} 
+initApp();
