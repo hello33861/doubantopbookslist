@@ -329,8 +329,6 @@ function initApp() {
         localStorage.setItem('sortMethod', currentSort);
     }
 
-    console.log(currentVersion, `books.json?v=${currentVersion}`);
-
     // 加载数据
     fetch(`books.json?v=${currentVersion}`)  // 添加版本号到数据文件
         .then(response => {
@@ -701,7 +699,6 @@ function initApp() {
             // 默认图片和实际图片URL
             const defaultImgUrl = 'https://img9.doubanio.com/f/shire/5522dd1f5b742d1e1394a17f44d590646b63871d/pics/book-default-medium.gif';
             let imgUrl = book.img_url || defaultImgUrl;
-            // console.log(imgUrl);
             // 使用代理服务替换豆瓣图片URL
             if (imgUrl.includes('doubanio.com') || imgUrl.includes('douban.com')) {
                 imgUrl = `https://images.weserv.nl/?url=${encodeURIComponent(imgUrl)}`;
