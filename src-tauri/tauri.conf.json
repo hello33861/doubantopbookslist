@@ -2,7 +2,7 @@
   "$schema": "../node_modules/@tauri-apps/cli/schema.json",
   "build": {
     "beforeBuildCommand": "cp index.html .distDir/index.html;cp script.js .distDir/script.js;cp styles.css .distDir/styles.css;cp books.json .distDir/books.json",
-    "beforeDevCommand": "py -m http.server 8000",
+    "beforeDevCommand": "python3 -m http.server 8000",
     "devPath": "http://127.0.0.1:8000",
     "distDir": "../.distDir"
   },
@@ -12,11 +12,23 @@
   },
   "tauri": {
     "allowlist": {
-      "all": false
+      "all": false,
+      "fs": {
+        "all": true,
+        "readFile": true,
+        "writeFile": true,
+        "readDir": true,
+        "scope": ["**"]
+      },
+      "http": {
+        "all": true,
+        "request": true,
+        "scope": ["https://**", "http://**"]
+      }
     },
     "bundle": {
       "active": true,
-      "category": "DeveloperTool",
+      "category": "Education",
       "copyright": "",
       "deb": {
         "depends": []
@@ -29,8 +41,8 @@
         "icons/icon.icns",
         "icons/icon.ico"
       ],
-      "identifier": "douban.topbooks",
-      "longDescription": "",
+      "identifier": "com.douban.topbooks",
+      "longDescription": "豆瓣Top图书榜单应用",
       "macOS": {
         "entitlements": null,
         "exceptionDomain": "",
@@ -39,19 +51,27 @@
         "signingIdentity": null
       },
       "resources": [],
-      "shortDescription": "",
-      "targets": "all",
+      "shortDescription": "豆瓣Top图书榜单",
+      "targets": ["deb", "msi", "app", "appimage"],
       "windows": {
         "certificateThumbprint": null,
         "digestAlgorithm": "sha256",
-        "timestampUrl": ""
+        "timestampUrl": "",
+        "webviewInstallMode": {
+          "type": "downloadBootstrapper"
+        }
       }
     },
     "security": {
-      "csp": null
+      "csp": "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: https://* http://*"
     },
     "updater": {
-      "active": false
+      "active": true,
+      "endpoints": [
+        "https://github.com/hello33861/doubantopbookslist/releases/latest/download/latest.json"
+      ],
+      "dialog": true,
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDc4MDBCQUQyNEIzMUVGRjkKUldUNTd6Rkwwcm9BZUJTVnVlZHhLQVZsQzljY0lhTkQzV29pUFNZVUFJTk1yMzVLeXowdHYxN2UK"
     },
     "windows": [
       {
@@ -59,7 +79,9 @@
         "height": 600,
         "resizable": true,
         "title": "豆瓣Top图书",
-        "width": 800
+        "width": 800,
+        "decorations": true,
+        "transparent": false
       }
     ]
   }
