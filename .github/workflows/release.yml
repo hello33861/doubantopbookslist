@@ -76,7 +76,28 @@ jobs:
           TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
         with:
           tagName: ${{ github.ref_name }}
-          releaseName: 'v__VERSION__'
-          releaseBody: 'See the assets to download this version and install.'
+          releaseName: '豆瓣Top图书榜单 ${{ github.ref_name }}'
+          releaseBody: |
+            豆瓣Top图书榜单应用 ${{ github.ref_name }} 发布
+            
+            ### 下载
+            - Windows 用户: 下载 .msi 文件
+            - macOS 用户: 下载 .dmg 文件
+            - Linux 用户: 下载 .deb 或 .AppImage 文件
+            
+            ### 安装说明
+            - Windows: 双击 .msi 文件安装
+            - macOS: 打开 .dmg 文件，将应用拖到 Applications 文件夹
+            - Linux: 
+              - 使用 .deb: `sudo dpkg -i 文件名.deb`
+              - 使用 .AppImage: 添加执行权限后直接运行
+            
+            ### 更新内容
+            - 初始版本发布
+            
+            ### 系统要求
+            - Windows 10/11
+            - macOS 10.15+
+            - Ubuntu 20.04+ 或兼容的 Linux 发行版
           releaseDraft: true
           prerelease: false
