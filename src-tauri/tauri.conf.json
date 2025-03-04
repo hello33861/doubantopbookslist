@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/schema.json",
   "build": {
-    "beforeBuildCommand": "cp index.html .distDir/index.html;cp script.js .distDir/script.js;cp styles.css .distDir/styles.css;cp books.json .distDir/books.json",
+    "beforeBuildCommand": "mkdir -p .distDir && cp index.html .distDir/ && cp script.js .distDir/ && cp styles.css .distDir/ && cp books.json .distDir/",
     "beforeDevCommand": "python3 -m http.server 8000",
     "devPath": "http://127.0.0.1:8000",
     "distDir": "../.distDir"
