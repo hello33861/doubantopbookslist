@@ -43,17 +43,28 @@ jobs:
             libayatana-appindicator3-dev \
             librsvg2-dev \
             libwebkit2gtk-4.1-dev \
-            libappindicator3-dev \
             patchelf
 
-      - name: Prepare build directory
+      - name: Prepare build directory (Unix)
+        if: matrix.platform != 'windows-latest'
         run: |
           mkdir -p .distDir
-          cp *.html .distDir/ || true
-          cp *.js .distDir/ || true
-          cp *.css .distDir/ || true
-          cp *.json .distDir/ || true
+          cp *.html .distDir/ 2>/dev/null || true
+          cp *.js .distDir/ 2>/dev/null || true
+          cp *.css .distDir/ 2>/dev/null || true
+          cp *.json .distDir/ 2>/dev/null || true
           ls -la .distDir
+
+      - name: Prepare build directory (Windows)
+        if: matrix.platform == 'windows-latest'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path .distDir
+          Copy-Item -Path "*.html" -Destination ".distDir\" -ErrorAction SilentlyContinue
+          Copy-Item -Path "*.js" -Destination ".distDir\" -ErrorAction SilentlyContinue
+          Copy-Item -Path "*.css" -Destination ".distDir\" -ErrorAction SilentlyContinue
+          Copy-Item -Path "*.json" -Destination ".distDir\" -ErrorAction SilentlyContinue
+          Get-ChildItem .distDir
 
       - name: Install frontend dependencies
         run: npm install
