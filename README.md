@@ -41,14 +41,14 @@ npm install
 
 3. 安装 Tauri CLI
 ```bash
-cargo install tauri-cli
+npm install -g @tauri-apps/cli
 ```
 
 ## 开发
 
 1. 启动开发服务器
 ```bash
-cargo tauri dev
+npm run dev-tauri
 ```
 
 ## 构建
@@ -56,7 +56,7 @@ cargo tauri dev
 ### 构建可执行文件
 
 ```bash
-cargo tauri build
+npm run build-tauri
 ```
 
 构建完成后，可执行文件将位于以下目录：
@@ -86,19 +86,6 @@ cargo tauri build --target appimage # Linux (通用)
    - 点击标签进行筛选
    - 使用"全选"/"取消全选"按钮批量操作
    - 使用"重置所有筛选"清除所有筛选条件
-
-## 项目结构
-
-```
-doubantopbookslist/
-├── src-tauri/           # Tauri 应用配置和构建文件
-├── index.html           # 主页面
-├── script.js           # 主要的 JavaScript 代码
-├── styles.css          # 样式表
-├── books.json          # 书籍数据
-├── csv_to_json.py      # 数据转换脚本
-└── README.md           # 项目说明文档
-```
 
 ## 贡献
 
