@@ -560,7 +560,7 @@ function initApp() {
     }
     
     // 更新书籍列表
-    function updateBooksList() {
+    function _updateBooksList() {
         // 筛选书籍
         let filteredBooks = allBooks;
         
@@ -667,7 +667,7 @@ function initApp() {
             // 如果没有搜索词，直接按评分或评价人数排序
             sortBooksByCurrentCriteria(filteredBooks);
         }
-        
+
         // 更新统计信息
         statsInfo.innerHTML = `
             <strong>统计信息:</strong> 共找到 ${filteredBooks.length} 本书籍
@@ -760,7 +760,19 @@ function initApp() {
         // 初始化懒加载
         initLazyLoading();
     }
-    
+
+    let updateBooksListTimeout = null;
+    function updateBooksList() {
+        if (updateBooksListTimeout) {
+            clearTimeout(updateBooksListTimeout);
+            updateBooksListTimeout = null;
+        }
+
+        updateBooksListTimeout = setTimeout(() => {
+            _updateBooksList();
+        }, 100);
+    }
+
     // 提取排序逻辑到单独的函数
     function sortBooksByCurrentCriteria(books) {
         books.sort((a, b) => {
@@ -802,14 +814,6 @@ function initApp() {
             const lazyImages = document.querySelectorAll('.lazy-image');
             lazyImages.forEach(lazyImage => {
                 lazyImageObserver.observe(lazyImage);
-            });
-        } else {
-            // 回退方案：对于不支持IntersectionObserver的浏览器
-            // 立即加载所有图片
-            const lazyImages = document.querySelectorAll('.lazy-image');
-            lazyImages.forEach(lazyImage => {
-                lazyImage.src = lazyImage.dataset.src;
-                lazyImage.classList.remove('lazy-image');
             });
         }
     }
