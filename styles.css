@@ -15,10 +15,26 @@ body {
     transition: transform 0.3s;
     border: none;
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    position: relative;
 }
 .book-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+}
+
+/* 添加书籍序号样式 */
+.book-number {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background-color: rgba(34, 139, 34, 0.85);
+    color: white;
+    font-weight: bold;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 14px;
+    z-index: 10;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
 /* 修改图片容器样式 */

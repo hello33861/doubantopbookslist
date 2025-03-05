@@ -560,7 +560,7 @@ function initApp() {
     }
     
     // 更新书籍列表
-    function _updateBooksList() {
+    function updateBooksList() {
         // 筛选书籍
         let filteredBooks = allBooks;
         
@@ -688,11 +688,34 @@ function initApp() {
             return;
         }
         
+        // 清空容器并创建行元素
         booksContainer.innerHTML = '';
         const row = document.createElement('div');
         row.className = 'row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4';
+        booksContainer.appendChild(row);
         
-        filteredBooks.forEach(book => {
+        // 添加加载指示器
+        const loadingIndicator = document.createElement('div');
+        loadingIndicator.id = 'incremental-loading-indicator';
+        loadingIndicator.className = 'text-center my-3';
+        loadingIndicator.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">加载中...</span></div>';
+        booksContainer.appendChild(loadingIndicator);
+        
+        // 使用增量渲染
+        renderBooksIncrementally(filteredBooks, row);
+    }
+    
+    // 增量渲染函数
+    function renderBooksIncrementally(books, container, startIndex = 0, batchSize = 20) {
+        // 创建文档片段以减少DOM操作
+        const fragment = document.createDocumentFragment();
+        
+        // 计算当前批次的结束索引
+        const endIndex = Math.min(startIndex + batchSize, books.length);
+        
+        // 渲染当前批次的书籍
+        for (let i = startIndex; i < endIndex; i++) {
+            const book = books[i];
             const col = document.createElement('div');
             col.className = 'col';
             
@@ -723,6 +746,7 @@ function initApp() {
             
             col.innerHTML = `
                 <div class="card book-card">
+                    <div class="book-number">#${i + 1}</div>
                     <div class="card-img-container">
                         <img class="card-img-top lazy-image" 
                              src="${defaultImgUrl}" 
@@ -752,25 +776,52 @@ function initApp() {
                 </div>
             `;
             
-            row.appendChild(col);
-        });
-        
-        booksContainer.appendChild(row);
-        
-        // 初始化懒加载
-        initLazyLoading();
-    }
-
-    let updateBooksListTimeout = null;
-    function updateBooksList() {
-        if (updateBooksListTimeout) {
-            clearTimeout(updateBooksListTimeout);
-            updateBooksListTimeout = null;
+            fragment.appendChild(col);
         }
+        
+        // 将当前批次添加到容器
+        container.appendChild(fragment);
+        
+        // 初始化当前批次的懒加载
+        initLazyLoadingForBatch();
+        
+        // 如果还有更多书籍要渲染，安排下一批
+        if (endIndex < books.length) {
+            // 使用requestAnimationFrame来安排下一批渲染
+            // 这样可以让浏览器有时间响应用户交互
+            requestAnimationFrame(() => {
+                renderBooksIncrementally(books, container, endIndex, batchSize);
+            });
+        } else {
+            // 所有书籍都已渲染完成，移除加载指示器
+            const loadingIndicator = document.getElementById('incremental-loading-indicator');
+            if (loadingIndicator) {
+                loadingIndicator.remove();
+            }
+        }
+    }
+    
+    // 为当前批次初始化懒加载
+    function initLazyLoadingForBatch() {
+        if ('IntersectionObserver' in window) {
+            const lazyImageObserver = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const lazyImage = entry.target;
+                        lazyImage.src = lazyImage.dataset.src;
+                        lazyImage.classList.remove('lazy-image');
+                        lazyImageObserver.unobserve(lazyImage);
+                    }
+                });
+            });
 
-        updateBooksListTimeout = setTimeout(() => {
-            _updateBooksList();
-        }, 100);
+            // 只选择尚未处理的懒加载图片
+            const lazyImages = document.querySelectorAll('.lazy-image:not([data-observed])');
+            lazyImages.forEach(lazyImage => {
+                lazyImage.setAttribute('data-observed', 'true');
+                lazyImageObserver.observe(lazyImage);
+            });
+        }
     }
 
     // 提取排序逻辑到单独的函数
@@ -796,7 +847,7 @@ function initApp() {
         });
     }
     
-    // 添加懒加载初始化函数
+    // 添加懒加载初始化函数 (保留原函数，但现在主要使用批次版本)
     function initLazyLoading() {
         // 使用Intersection Observer API实现懒加载
         if ('IntersectionObserver' in window) {
