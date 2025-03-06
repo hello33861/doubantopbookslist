@@ -560,7 +560,7 @@ function initApp() {
     }
     
     // 更新书籍列表
-    function updateBooksList() {
+    function _updateBooksList() {
         // 筛选书籍
         let filteredBooks = allBooks;
         
@@ -704,7 +704,9 @@ function initApp() {
         // 使用增量渲染
         renderBooksIncrementally(filteredBooks, row);
     }
-    
+
+    let updateBooksList = debounce(_updateBooksList, 100);
+
     // 增量渲染函数
     function renderBooksIncrementally(books, container, startIndex = 0, batchSize = 20) {
         // 创建文档片段以减少DOM操作
