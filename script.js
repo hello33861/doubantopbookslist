@@ -358,8 +358,8 @@ function initApp() {
             // 初始化标签
             renderTags();
             
-            // 初始化书籍列表
-            updateBooksList();
+            // 初始化书籍列表 - 初始加载时不滚动
+            updateBooksList(false);
             
             // 使用防抖优化搜索输入
             searchInput.addEventListener('input', debounce(function() {
