@@ -5,6 +5,8 @@ let filteredBooks = [];
 let currentTag = 'all';
 let currentSort = 'votes-desc';
 let searchQuery = '';
+let currentPage = 1; // 当前页码
+let booksPerPage = 100; // 每页显示的书籍数量
 
 // 在script.js文件中添加标签分类定义
 const tagCategories = {
@@ -291,6 +293,7 @@ function initApp() {
     const deselectAllTagsBtn = document.getElementById('deselectAllTags');
     const resetFiltersBtn = document.getElementById('resetFilters');
     const statsInfo = document.getElementById('statsInfo');
+    const paginationContainer = document.getElementById('paginationContainer');
     
     // 存储数据和筛选状态
     let allBooks = [];
@@ -298,6 +301,7 @@ function initApp() {
     let selectedTags = new Set();
     let searchTerm = '';
     let currentSort = 'votes-desc';
+    let currentPage = 1; // 当前页码
     
     // 从localStorage加载保存的状态
     function loadSavedState() {
@@ -320,6 +324,12 @@ function initApp() {
             currentSort = savedSort;
             sortSelect.value = savedSort;
         }
+        
+        // 加载当前页码
+        const savedPage = localStorage.getItem('currentPage');
+        if (savedPage) {
+            currentPage = parseInt(savedPage, 10);
+        }
     }
     
     // 保存当前状态到localStorage
@@ -327,6 +337,7 @@ function initApp() {
         localStorage.setItem('selectedTags', JSON.stringify(Array.from(selectedTags)));
         localStorage.setItem('searchText', searchInput.value);
         localStorage.setItem('sortMethod', currentSort);
+        localStorage.setItem('currentPage', currentPage.toString());
     }
 
     // 加载数据
@@ -353,18 +364,21 @@ function initApp() {
             // 使用防抖优化搜索输入
             searchInput.addEventListener('input', debounce(function() {
                 searchTerm = this.value.trim().toLowerCase();
+                currentPage = 1; // 搜索时重置为第一页
                 saveCurrentState(); // 保存状态
                 updateBooksList();
             }, 300)); // 300毫秒的延迟
             
             sortSelect.addEventListener('change', function() {
                 currentSort = this.value;
+                currentPage = 1; // 排序时重置为第一页
                 saveCurrentState(); // 保存状态
                 updateBooksList();
             });
             
             selectAllTagsBtn.addEventListener('click', function() {
                 selectedTags = new Set(allTags);
+                currentPage = 1; // 重置为第一页
                 saveCurrentState(); // 保存状态
                 renderTags();
                 updateBooksList();
@@ -372,6 +386,7 @@ function initApp() {
             
             deselectAllTagsBtn.addEventListener('click', function() {
                 selectedTags.clear();
+                currentPage = 1; // 重置为第一页
                 saveCurrentState(); // 保存状态
                 renderTags();
                 updateBooksList();
@@ -383,6 +398,7 @@ function initApp() {
                 searchTerm = '';
                 sortSelect.value = 'votes-desc';
                 currentSort = 'votes-desc';
+                currentPage = 1; // 重置为第一页
                 saveCurrentState(); // 保存状态
                 renderTags();
                 updateBooksList();
@@ -685,14 +701,30 @@ function initApp() {
                     </button>
                 </div>
             `;
+            paginationContainer.innerHTML = ''; // 清空分页控件
             return;
         }
         
+        // 计算总页数
+        const totalPages = Math.ceil(filteredBooks.length / booksPerPage);
+        
+        // 如果当前页码超出范围，重置为第一页
+        if (currentPage > totalPages) {
+            currentPage = 1;
+            saveCurrentState();
+        }
+        
+        // 计算当前页的书籍
+        const startIndex = (currentPage - 1) * booksPerPage;
+        const endIndex = Math.min(startIndex + booksPerPage, filteredBooks.length);
+        const currentPageBooks = filteredBooks.slice(startIndex, endIndex);
+        
+        // 渲染当前页的书籍
         booksContainer.innerHTML = '';
         const row = document.createElement('div');
         row.className = 'row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4';
         
-        filteredBooks.forEach(book => {
+        currentPageBooks.forEach(book => {
             const col = document.createElement('div');
             col.className = 'col';
             
@@ -757,8 +789,101 @@ function initApp() {
         
         booksContainer.appendChild(row);
         
+        // 更新分页控件
+        renderPagination(totalPages);
+        
         // 初始化懒加载
         initLazyLoading();
+        
+        // 滚动到页面顶部
+        window.scrollTo(0, 0);
+    }
+    
+    // 渲染分页控件
+    function renderPagination(totalPages) {
+        if (totalPages <= 1) {
+            paginationContainer.innerHTML = ''; // 如果只有一页，不显示分页控件
+            return;
+        }
+        
+        const pagination = document.createElement('nav');
+        pagination.setAttribute('aria-label', '书籍分页');
+        
+        const ul = document.createElement('ul');
+        ul.className = 'pagination';
+        
+        // 添加"上一页"按钮
+        const prevLi = document.createElement('li');
+        prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+        const prevLink = document.createElement('a');
+        prevLink.className = 'page-link';
+        prevLink.href = '#';
+        prevLink.setAttribute('aria-label', '上一页');
+        prevLink.innerHTML = '<span aria-hidden="true">&laquo;</span>';
+        if (currentPage > 1) {
+            prevLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                currentPage--;
+                saveCurrentState();
+                updateBooksList();
+            });
+        }
+        prevLi.appendChild(prevLink);
+        ul.appendChild(prevLi);
+        
+        // 确定要显示的页码范围
+        let startPage = Math.max(1, currentPage - 2);
+        let endPage = Math.min(totalPages, startPage + 4);
+        
+        // 调整起始页，确保始终显示5个页码（如果总页数足够）
+        if (endPage - startPage < 4 && totalPages > 4) {
+            startPage = Math.max(1, endPage - 4);
+        }
+        
+        // 添加页码按钮
+        for (let i = startPage; i <= endPage; i++) {
+            const pageLi = document.createElement('li');
+            pageLi.className = `page-item ${i === currentPage ? 'active' : ''}`;
+            const pageLink = document.createElement('a');
+            pageLink.className = 'page-link';
+            pageLink.href = '#';
+            pageLink.textContent = i;
+            if (i === currentPage) {
+                pageLink.setAttribute('aria-current', 'page');
+            } else {
+                pageLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    currentPage = i;
+                    saveCurrentState();
+                    updateBooksList();
+                });
+            }
+            pageLi.appendChild(pageLink);
+            ul.appendChild(pageLi);
+        }
+        
+        // 添加"下一页"按钮
+        const nextLi = document.createElement('li');
+        nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+        const nextLink = document.createElement('a');
+        nextLink.className = 'page-link';
+        nextLink.href = '#';
+        nextLink.setAttribute('aria-label', '下一页');
+        nextLink.innerHTML = '<span aria-hidden="true">&raquo;</span>';
+        if (currentPage < totalPages) {
+            nextLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                currentPage++;
+                saveCurrentState();
+                updateBooksList();
+            });
+        }
+        nextLi.appendChild(nextLink);
+        ul.appendChild(nextLi);
+        
+        pagination.appendChild(ul);
+        paginationContainer.innerHTML = '';
+        paginationContainer.appendChild(pagination);
     }
     
     // 提取排序逻辑到单独的函数
