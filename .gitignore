@@ -9,6 +9,9 @@ lerna-debug.log*
 *.sh
 .screenshots
 .distDir
+.specstory
+.cursorrules
+*.code-workspace
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
