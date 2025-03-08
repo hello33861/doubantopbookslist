@@ -366,30 +366,42 @@ function initApp() {
                 searchTerm = this.value.trim().toLowerCase();
                 currentPage = 1; // 搜索时重置为第一页
                 saveCurrentState(); // 保存状态
-                updateBooksList();
+                updateBooksList(true); // 搜索时滚动到书籍顶部
             }, 300)); // 300毫秒的延迟
             
             sortSelect.addEventListener('change', function() {
                 currentSort = this.value;
                 currentPage = 1; // 排序时重置为第一页
                 saveCurrentState(); // 保存状态
-                updateBooksList();
+                updateBooksList(true); // 排序时滚动到书籍顶部
             });
             
             selectAllTagsBtn.addEventListener('click', function() {
+                // 保存当前滚动位置
+                const currentScrollPosition = window.scrollY;
+                
                 selectedTags = new Set(allTags);
                 currentPage = 1; // 重置为第一页
                 saveCurrentState(); // 保存状态
                 renderTags();
-                updateBooksList();
+                updateBooksList(false); // 不滚动到顶部
+                
+                // 恢复滚动位置
+                window.scrollTo(0, currentScrollPosition);
             });
             
             deselectAllTagsBtn.addEventListener('click', function() {
+                // 保存当前滚动位置
+                const currentScrollPosition = window.scrollY;
+                
                 selectedTags.clear();
                 currentPage = 1; // 重置为第一页
                 saveCurrentState(); // 保存状态
                 renderTags();
-                updateBooksList();
+                updateBooksList(false); // 不滚动到顶部
+                
+                // 恢复滚动位置
+                window.scrollTo(0, currentScrollPosition);
             });
             
             resetFiltersBtn.addEventListener('click', function() {
@@ -401,7 +413,7 @@ function initApp() {
                 currentPage = 1; // 重置为第一页
                 saveCurrentState(); // 保存状态
                 renderTags();
-                updateBooksList();
+                updateBooksList(true); // 重置所有筛选时滚动到书籍顶部
             });
         })
         .catch(error => {
@@ -427,6 +439,9 @@ function initApp() {
         document.querySelectorAll('.accordion-collapse.show').forEach(item => {
             expandedCategories.push(item.id);
         });
+        
+        // 保存当前滚动位置
+        const scrollPosition = window.scrollY;
         
         tagAccordion.innerHTML = '';
         
@@ -493,6 +508,9 @@ function initApp() {
                 tagBadge.className = `badge tag-badge ${selectedTags.has(tag) ? 'active' : ''}`;
                 tagBadge.innerHTML = `${tag} <span class="tag-count">(${allTagsCount[tag]})</span>`;
                 tagBadge.addEventListener('click', function() {
+                    // 保存当前滚动位置
+                    const currentScrollPosition = window.scrollY;
+                    
                     if (selectedTags.has(tag)) {
                         selectedTags.delete(tag);
                     } else {
@@ -500,8 +518,15 @@ function initApp() {
                     }
                     this.classList.toggle('active');
                     saveCurrentState(); // 保存状态
-                    updateBooksList();
-                    renderTags(); // 重新渲染标签以更新选中状态
+                    
+                    // 更新书籍列表但不滚动到顶部
+                    updateBooksList(false);
+                    
+                    // 重新渲染标签以更新选中状态
+                    renderTags(); 
+                    
+                    // 恢复滚动位置
+                    window.scrollTo(0, currentScrollPosition);
                 });
                 categoryTagsContainer.appendChild(tagBadge);
                 categoryTagsContainer.appendChild(document.createTextNode(' '));
@@ -559,6 +584,9 @@ function initApp() {
                 tagBadge.className = `badge tag-badge ${selectedTags.has(tag) ? 'active' : ''}`;
                 tagBadge.innerHTML = `${tag} <span class="tag-count">(${allTagsCount[tag]})</span>`;
                 tagBadge.addEventListener('click', function() {
+                    // 保存当前滚动位置
+                    const currentScrollPosition = window.scrollY;
+                    
                     if (selectedTags.has(tag)) {
                         selectedTags.delete(tag);
                     } else {
@@ -566,17 +594,27 @@ function initApp() {
                     }
                     this.classList.toggle('active');
                     saveCurrentState(); // 保存状态
-                    updateBooksList();
-                    renderTags(); // 重新渲染标签以更新选中状态
+                    
+                    // 更新书籍列表但不滚动到顶部
+                    updateBooksList(false);
+                    
+                    // 重新渲染标签以更新选中状态
+                    renderTags();
+                    
+                    // 恢复滚动位置
+                    window.scrollTo(0, currentScrollPosition);
                 });
                 othersTagsContainer.appendChild(tagBadge);
                 othersTagsContainer.appendChild(document.createTextNode(' '));
             });
         }
+        
+        // 恢复滚动位置
+        window.scrollTo(0, scrollPosition);
     }
     
     // 更新书籍列表
-    function updateBooksList() {
+    function updateBooksList(scrollToBooks = true) {
         // 筛选书籍
         let filteredBooks = allBooks;
         
@@ -795,8 +833,15 @@ function initApp() {
         // 初始化懒加载
         initLazyLoading();
         
-        // 滚动到页面顶部
-        window.scrollTo(0, 0);
+        // 如果需要滚动到书籍列表顶部，则执行滚动
+        if (scrollToBooks) {
+            // 滚动到书籍容器的顶部，而不是页面顶部
+            const booksContainerTop = document.getElementById('booksContainer').offsetTop;
+            window.scrollTo({
+                top: booksContainerTop - 20, // 减去一点空间以获得更好的视觉效果
+                behavior: 'smooth'
+            });
+        }
     }
     
     // 渲染分页控件
@@ -825,7 +870,7 @@ function initApp() {
                 e.preventDefault();
                 currentPage--;
                 saveCurrentState();
-                updateBooksList();
+                updateBooksList(true); // 滚动到书籍顶部
             });
         }
         prevLi.appendChild(prevLink);
@@ -855,7 +900,7 @@ function initApp() {
                     e.preventDefault();
                     currentPage = i;
                     saveCurrentState();
-                    updateBooksList();
+                    updateBooksList(true); // 滚动到书籍顶部
                 });
             }
             pageLi.appendChild(pageLink);
@@ -875,7 +920,7 @@ function initApp() {
                 e.preventDefault();
                 currentPage++;
                 saveCurrentState();
-                updateBooksList();
+                updateBooksList(true); // 滚动到书籍顶部
             });
         }
         nextLi.appendChild(nextLink);
