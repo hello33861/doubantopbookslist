@@ -366,7 +366,7 @@ function initApp() {
                 searchTerm = this.value.trim().toLowerCase();
                 currentPage = 1; // 搜索时重置为第一页
                 saveCurrentState(); // 保存状态
-                updateBooksList(true); // 搜索时滚动到书籍顶部
+                updateBooksList(false); // 搜索时滚动到书籍顶部
             }, 300)); // 300毫秒的延迟
             
             sortSelect.addEventListener('change', function() {
